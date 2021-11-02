@@ -3,18 +3,58 @@
 
 import * as React from "react";
 
-function Greeting({initialName = ""}) {
-  // 🐨 initialize the state to the value from localStorage
-  initialName = window.localStorage.getItem("name") || initialName;
-  const [name, setName] = React.useState(initialName);
+const useLocalStorage = function (
+  key,
+  defaultValue = "",
+  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
+) {
 
-  React.useEffect(() => {
-    window.localStorage.setItem("name", name);
+  defaultValue = typeof defaultValue === "function" ? defaultValue() : defaultValue;
+  serialize = typeof serialize === "function" ? serialize : JSON.stringify;
+  deserialize = typeof deserialize === "function" ? deserialize : JSON.parse;
+
+  const getter = () => {
+    let value = window.localStorage.getItem(key); // never undefined
+    return (value === null) ? defaultValue : deserialize(value);
+  };
+
+  const setter = value => localStorage.setItem(key, serialize(value));
+  const remover = oldKey => localStorage.removeItem(oldKey);
+
+  return [getter, setter, remover];
+};
+
+const useStateWithLocalStorage = (
+  key,
+  defaultValue = "",
+  {serialize, deserialize} = {},
+) => {
+  key = typeof key === "function" ? key() : key;
+  const previousKeyRef = React.useRef(key);
+  const [savedValue, setSavedValue, removeSavedValue] = useLocalStorage(key, defaultValue, {
+    serialize,
+    deserialize,
   });
 
-  function handleChange(event) {
-    setName(event.target.value);
-  }
+  const [state, setState] = React.useState(savedValue);
+
+  React.useEffect(() => {
+    if (previousKeyRef.current === key) {
+      setSavedValue(state);
+    }
+    else {
+      removeSavedValue(previousKeyRef.current);
+      previousKeyRef.current = key;
+    }
+  }, [state, setSavedValue, key, removeSavedValue]);
+
+  return [state, setState];
+};
+
+function Greeting({initialName = ""}) {
+  const [name, setName] = useStateWithLocalStorage(() => "name", initialName);
+  const handleChange = event => setName(event.target.value);
+
   return (
     <div>
       <form>
