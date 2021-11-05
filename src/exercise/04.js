@@ -5,7 +5,7 @@ import * as React from "react";
 
 const emptyBoard = Array(9).fill(null);
 
-function useLocalStorage(key, initialValue) {
+function useStateWithLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = React.useState(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -20,7 +20,7 @@ function useLocalStorage(key, initialValue) {
 
   React.useEffect(() => {
     console.log(
-      `%c persist ${key}=${JSON.stringify(storedValue)}`,
+      `%c store: ${key}=${JSON.stringify(storedValue)}`,
       "color:green",
     );
     window.localStorage.setItem(key, JSON.stringify(storedValue));
@@ -30,36 +30,32 @@ function useLocalStorage(key, initialValue) {
 }
 
 function Board() {
-  const [savedSquares, setSavedSquares] = useLocalStorage(
-    "squares",
-    emptyBoard,
-  );
-
-  const [history, setHistory] = useLocalStorage("history", []);
-  const [stepNumber, setStepNumber] = useLocalStorage("stepNumber", 0);
-  const [squares, setSquares] = React.useState(savedSquares);
+  const [squares, setSquares] = useStateWithLocalStorage("squares", emptyBoard);
+  const [history, setHistory] = useStateWithLocalStorage("history", []);
+  const [stepNumber, setStepNumber] = useStateWithLocalStorage("stepNumber", 0);
   const nextValue = calculateNextValue(squares);
   const winner = calculateWinner(squares);
   const status = calculateStatus(winner, squares, nextValue);
-
-  React.useEffect(() => {
-    setSavedSquares(squares);
-  }, [setSavedSquares, squares]);
 
   const selectSquare = function selectSquare(square) {
     if (winner || squares[square]) {
       return;
     }
 
+    setStepNumber(stepNumber + 1);
+    updateHistory(updateSquares(square));
+  };
+
+  const updateSquares = function updateSquares(square) {
     const newSquares = [...squares];
     newSquares[square] = nextValue;
-    setStepNumber(stepNumber + 1);
     setSquares(newSquares);
-    setSavedSquares(newSquares);
 
-    console.log(`%c step ${stepNumber}`, "color:purple");
+    return newSquares;
+  };
+
+  const updateHistory = function updateHistory(newSquares) {
     const newHistory = [...history].slice(0, stepNumber + 1);
-    console.log(`%c ${JSON.stringify(newHistory)}`, "color:purple");
     newHistory.push(newSquares);
     setHistory(newHistory);
   };
