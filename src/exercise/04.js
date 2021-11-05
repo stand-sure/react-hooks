@@ -11,19 +11,20 @@ function useLocalStorage(key, initialValue) {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.log(error);
+      console.log(`%c ${error}`, "color:red");
       return initialValue;
     }
   });
 
-  const setValue = value => {
-    try {
-      setStoredValue(value);
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const setValue = value => setStoredValue(value);
+
+  React.useEffect(() => {
+    console.log(
+      `%c persist ${key}=${JSON.stringify(storedValue)}`,
+      "color:green",
+    );
+    window.localStorage.setItem(key, JSON.stringify(storedValue));
+  }, [key, storedValue]);
 
   return [storedValue, setValue];
 }
@@ -54,7 +55,11 @@ function Board() {
     newSquares[square] = nextValue;
     setStepNumber(stepNumber + 1);
     setSquares(newSquares);
-    const newHistory = [...history];
+    setSavedSquares(newSquares);
+
+    console.log(`%c step ${stepNumber}`, "color:purple");
+    const newHistory = [...history].slice(0, stepNumber + 1);
+    console.log(`%c ${JSON.stringify(newHistory)}`, "color:purple");
     newHistory.push(newSquares);
     setHistory(newHistory);
   };
