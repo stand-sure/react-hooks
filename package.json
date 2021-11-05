@@ -17,6 +17,7 @@
     "@kentcdodds/react-workshop-app": "^4.3.0",
     "@testing-library/react": "^11.2.6",
     "@testing-library/user-event": "^13.1.9",
+    "chalk": "^4.1.2",
     "codegen.macro": "^4.1.0",
     "jshint": "^2.13.1",
     "react": "^17.0.2",
