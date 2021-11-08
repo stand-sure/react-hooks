@@ -19,18 +19,10 @@ class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = {error: null};
-    this.resetErrorBoundary = this.resetErrorBoundary.bind(this);
   }
 
   static getDerivedStateFromError(error) {
     return {error};
-  }
-
-  resetErrorBoundary() {
-    let {continuation} = this.props;
-    continuation = continuation instanceof Function ? continuation : () => {};
-    this.setState({error: null});
-    continuation();
   }
 
   render() {
@@ -126,7 +118,7 @@ function App() {
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
       <div className="pokemon-info">
-        <PokemonInfoWithErrorBoundary pokemonName={pokemonName} continuation={handleSubmit} />
+        <PokemonInfoWithErrorBoundary pokemonName={pokemonName} key={pokemonName} />
       </div>
     </div>
   );
