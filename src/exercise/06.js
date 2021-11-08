@@ -9,51 +9,25 @@ import {
   PokemonInfoFallback,
   PokemonDataView,
 } from "../pokemon";
+import {withErrorBoundary} from "react-error-boundary";
 
 const idle = "idle";
 const pending = "pending";
 const resolved = "resolved";
 const rejected = "rejected";
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {error: null};
-  }
-
-  static getDerivedStateFromError(error) {
-    return {error};
-  }
-
-  render() {
-    const {error} = this.state;
-    const {FallbackComponent, children} = this.props;
-
-    const retVal = error ? (
-      <FallbackComponent
-        error={error}
-        resetErrorBoundary={this.resetErrorBoundary}
-      />
-    ) : (
-      children
-    );
-    return retVal;
-  }
-}
-
-const withErrorBoundary = Component => props =>
-  (
-    <ErrorBoundary FallbackComponent={props.FallbackComponent || ErrorFallback} continuation={props.continuation}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
+// const withErrorBoundary = Component => props =>
+//   (
+//     <ErrorBoundary FallbackComponent={props.FallbackComponent || ErrorFallback}>
+//       <Component {...props} />
+//     </ErrorBoundary>
+//   );
 
 function ErrorFallback({error, resetErrorBoundary = () => {}}) {
   const {message} = error;
   return error ? (
     <div className="alert">
       There was an error: <pre style={{whiteSpace: "normal"}}>{message}</pre>
-      <button onClick={resetErrorBoundary}>Try Again</button>
     </div>
   ) : null;
 }
@@ -104,7 +78,14 @@ function PokemonInfo({pokemonName}) {
   return retVal;
 }
 
-const PokemonInfoWithErrorBoundary = withErrorBoundary(PokemonInfo);
+const PokemonInfoWithErrorBoundary = withErrorBoundary(PokemonInfo, {
+  FallbackComponent: ErrorFallback,
+  onError: (error, componentStack, resetErrorBoundary) => {
+    console.error(error);
+    console.error(componentStack); 
+    resetErrorBoundary instanceof Function && resetErrorBoundary();   
+  }
+});
 
 function App() {
   const [pokemonName, setPokemonName] = React.useState("");
@@ -118,7 +99,10 @@ function App() {
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
       <div className="pokemon-info">
-        <PokemonInfoWithErrorBoundary pokemonName={pokemonName} key={pokemonName} />
+        <PokemonInfoWithErrorBoundary
+          pokemonName={pokemonName}
+          key={pokemonName}
+        />
       </div>
     </div>
   );
